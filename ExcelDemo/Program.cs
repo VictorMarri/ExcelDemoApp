@@ -10,13 +10,17 @@ namespace ExcelDemo
     {
         static async Task Main(string[] args)
         {
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial; //EPPlus é pago em contexos comerciais, aqui estamos falando que seu uso não será para fins comerciais
+            //EPPlus é pago em contexos comerciais, aqui estamos falando que seu uso não será para fins comerciais
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            var file = new FileInfo(@"C:\Demos\ExcelDemo.xlsx"); //Esse é o caminho do arquivo, onde vai ficar alocado os arquivos que criarmos
+            //Esse é o caminho do arquivo, onde vai ficar alocado os arquivos que criarmos
+            var file = new FileInfo(@"C:\Demos\ExcelDemo.xlsx");
 
-            var people = GetSetupData(); //Aqui a gente ja vai estar dando um 'Load' na nossa lista de Pessoas
+            //Aqui a gente ja vai estar dando um 'Load' na nossa lista de Pessoas
+            var people = GetSetupData();
 
-            await SaveExcelFile(people, file); //Vamos salvar os dados no arquivo, e como isso pode demorar um certo tempo, usamos o await e transformamos o Main em async Task
+            //Vamos salvar os dados no arquivo, e como isso pode demorar um certo tempo, usamos o await e transformamos o Main em async Task
+            await SaveExcelFile(people, file); 
         }
 
         /// <summary>
@@ -25,14 +29,24 @@ namespace ExcelDemo
         /// <param name="people">A Lista de dados que criamos para ser inserida dentro do excel</param>
         /// <param name="file">O Arquivo em si, o seu caminho. Será feita checagem pra ver se ja existe</param>
         /// <returns>Retorna o Salvamento do Arquivo</returns>
-        private static Task SaveExcelFile(List<PersonModel> people, FileInfo file)
+        private static async Task SaveExcelFile(List<PersonModel> people, FileInfo file)
         {
-            DeleteIfExists(file); //Checa se o arquivo q foi passado existe. Se existe, vai deletar esse arquivo antes da gente rodar a aplicação 
+            //Checa se o arquivo q foi passado existe. Se existe, vai deletar esse arquivo antes da gente rodar a aplicação
+            DeleteIfExists(file);
 
-            using (var package = new ExcelPackage(file)) //Qualquer coisa que instanciarmos aqui, no final da sua execução, vai ter seus recursos limpos. Sem registros dele soltos pela aplicação, caso alguem abra fisicamente o arquivo e ele esteja impedido pq algo na aplicação deixou resquicios. Ou seja, using vai chamar automaticamente o metodo Disposable() pra gente no final desse escopo.
-            {
-                
-            }
+            //Qualquer coisa que instanciarmos aqui, no final da sua execução, vai ter seus recursos limpos. Sem registros dele soltos pela aplicação, caso alguem abra fisicamente o arquivo e ele esteja impedido pq algo na aplicação deixou resquicios. Ou seja, using vai chamar automaticamente o metodo Disposable() pra gente no final desse escopo.
+            using var package = new ExcelPackage(file);
+
+            //To colocando um Sheet chamado "MainReport" no excel file
+            var ws = package.Workbook.Worksheets.Add("MainReport");
+
+            //Entao agora a gente tem um sheet novo no nosso excel chamado "MainReport", agora a gente vai adicionar dados nesse sheet
+            var range = ws.Cells["A1"].LoadFromCollection(people, PrintHeaders: true); //Vai pegar os dados da nossa lista de pessoas que criamos, e vai salvar no excel como colunas.E a primeira linha vai ser a linha de cabeçalho, que pega o nome da propriedade e coloca na primeira coluna  
+
+            //To ajustando as colunas, os tamanhos dela de acordo com o tamanho dos dados q tiver la 
+            range.AutoFitColumns(); 
+
+            await package.SaveAsync();
         
         }
 
